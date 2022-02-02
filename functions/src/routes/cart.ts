@@ -6,61 +6,45 @@ import { database } from 'firebase-admin';
 
 const cartRoutes = express.Router();
 
-cartRoutes.get('/cart-items', async (req, res) => {
+cartRoutes.get('/cart-items', async (req, res) => { //slide 80 of 9b
     const client = await getClient();
-    const results = await client.db().collection<Cart>('cartItems').find().toArray();
-    let maxPriceParam: string = req.query.maxPrice as string;
-    let productParam: string = req.query.product as string;
-    let pageSizeParam: string = req.query.pageSize as string;
+    let product: string = req.query.product as string;
+    let pageSize: number = parseInt(req.query.pageSize as string);
+    let maxPrice: number = parseInt(req.query.maxPrice as string) ;
+    if(maxPrice){
+        const results = await client.db().collection<Cart>('cartItems')
+            .find({price: { $lte: maxPrice} }).toArray();
+        res.json(results);
+    } else if(product){
+        const results = await client.db().collection<Cart>('cartItems')
+            .find({product: product}).toArray();
+        res.json(results);
+    } else if(pageSize){
+        const results = await client.db().collection<Cart>('cartItems')
+        .find().limit(pageSize).toArray();
+    res.json(results);
+    }
 
     // max price    ?maxPrice=
-     if(maxPriceParam){
-        let maxPrice: number = parseFloat(maxPriceParam);
-        let filteredCart: Cart[] = results.filter(result => {
-            if(result.price <= maxPrice){
-                return result;
-            };
-        });
-        res.json(filteredCart);
-    }
-        if(pageSizeParam){
-            let sizedCart: Cart[] = [];
-            let pageSize: number = parseFloat(pageSizeParam);
-            
-            for(let i = 0; i < pageSize; i++){
-                sizedCart[i] = results[i];
-            }
-            res.json(sizedCart);
-        }
-        if(productParam){
-            let product: string = productParam;
-            let filteredCart: Cart[] = results.filter(result => {
-                if(result.product === product){
-                    return result;
-                };
-            });
-            res.status(200);
-            res.json(filteredCart);
-        }
-    res.json(results);
+     
 });
 
 cartRoutes.get('/cart-items/:id', async (req, res) => {
-    let inputId: string = req.params.id;
-    const client = await getClient();
-    const results = await client.db().collection<Cart>('cartItems').find().toArray();
+    let id: string = req.params.id;
     try {
-    for(let i = 0; i < results.length; i++){
-        if(String(results[i]._id) === inputId){
-            res.status(200);
-            res.json(results[i]);
-            break;
-        }
+    const client = await getClient();
+    const results = await client.db().collection<Cart>('cartItems').findOne({_id: new ObjectId(id)})
+    
+    if(results) {
+        res.json(results);
+    } else {
+        res.status(404).json({message: "Not Found"});
     }
+    
     res.status(200);
     res.json(results);
 } catch(e){
-    res.status(404).json({message: "Not Found"});
+    console.error("Error:", e);
 }
 });
 
