@@ -14,14 +14,17 @@ cartRoutes.get('/cart-items', async (req, res) => { //slide 80 of 9b
     if(maxPrice){
         const results = await client.db().collection<Cart>('cartItems')
             .find({price: { $lte: maxPrice} }).toArray();
+            res.status(200);
         res.json(results);
     } else if(product){
         const results = await client.db().collection<Cart>('cartItems')
             .find({product: product}).toArray();
+            res.status(200);
         res.json(results);
     } else if(pageSize){
         const results = await client.db().collection<Cart>('cartItems')
         .find().limit(pageSize).toArray();
+        res.status(200);
     res.json(results);
     }
 
@@ -36,13 +39,11 @@ cartRoutes.get('/cart-items/:id', async (req, res) => {
     const results = await client.db().collection<Cart>('cartItems').findOne({_id: new ObjectId(id)})
     
     if(results) {
+        res.status(200);
         res.json(results);
     } else {
         res.status(404).json({message: "Not Found"});
     }
-    
-    res.status(200);
-    res.json(results);
 } catch(e){
     console.error("Error:", e);
 }
@@ -67,6 +68,7 @@ cartRoutes.put('/cart-items/:id', async (req, res) => {
             res.status(404).json({message: "Not Found"});
         } else {
             cart._id = new ObjectId(id);
+            res.status(200);
             res.json(cart);
         }
     } catch (e) {
